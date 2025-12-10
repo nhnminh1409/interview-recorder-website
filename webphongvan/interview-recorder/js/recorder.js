@@ -1,4 +1,3 @@
-// js/recorder-v4-final-timer.js → BẢN HOÀN CHỈNH V4 + TIMER 10s + 5s WAITING + AUTO NEXT
 let recorder, stream, recordedBlob = null;
 const video = document.getElementById('videoPreview');
 const startBtn = document.getElementById('startBtn');
@@ -35,7 +34,7 @@ function startAnswerCountdown() {
   clearInterval(timerInterval);
   clearInterval(waitInterval);
   
-  let timeLeft = 10; // ✅ 10 GIÂY CHO MỖI CÂU HỎI
+  let timeLeft = 60; // ✅ 60 GIÂY CHO MỖI CÂU HỎI
   countdownEl.innerText = formatTime(timeLeft);
   countdownEl.className = 'countdown text-danger fw-bold fs-1';
   
@@ -120,7 +119,7 @@ function showQuestion(idx) {
 
   status.innerHTML = '<small class="text-success">Sẵn sàng – Bấm Start Recording</small>';
   uploadStatus.innerHTML = '';
-  countdownEl.innerText = '00:10'; // ✅ RESET COUNTDOWN
+  countdownEl.innerText = '01:00'; // ✅ RESET COUNTDOWN
   countdownEl.className = 'countdown text-success fw-bold fs-1';
 
   startBtn.classList.remove('d-none');
@@ -172,7 +171,7 @@ startBtn.onclick = async () => {
     recorder.start();
     startBtn.classList.add('d-none');
     stopBtn.classList.remove('d-none');
-    status.innerHTML = '<small class="text-warning">Đang ghi hình… (10s tự động dừng)</small>';
+    status.innerHTML = '<small class="text-warning">Đang ghi hình… (60s tự động dừng)</small>';
     
     // ✅ BẮT ĐẦU COUNTDOWN 10 GIÂY
     startAnswerCountdown();
