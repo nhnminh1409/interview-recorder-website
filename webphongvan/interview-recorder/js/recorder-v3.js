@@ -15,9 +15,9 @@ const MAX_SIZE = 200 * 1024 * 1024;
 
 const TIME_CONFIG = {
   QUESTION_PREPARE: 5,
-  PREPARE_TIME: 3,
+  PREPARE_TIME: 5,
   RECORDING_TIME: 60,
-  BREAK_TIME: 5
+  BREAK_TIME: 3
 };
 
 let timerId = null;
@@ -140,7 +140,7 @@ function startBreak() {
 
   if (currentIdx === 0) {
     // CÂU 1: Nghỉ 5s + hiện nút Next
-    status.innerHTML = '<small class="text-info">Nghỉ 5 giây...</small>';
+    status.innerHTML = '<small class="text-info">Nghỉ 3 giây...</small>';
     nextBtn.classList.remove('d-none');
     nextBtn.disabled = false;
     nextBtn.textContent = (currentIdx === questions.length - 1) ? 'Upload & Finish' : 'Next →';
@@ -150,13 +150,13 @@ function startBreak() {
     });
   } else {
     // TỪ CÂU 2: Nghỉ 5s BẮT BUỘC → 3s preview + nút skip
-    status.innerHTML = '<small class="text-info">Nghỉ 5 giây...</small>';
+    status.innerHTML = '<small class="text-info">Nghỉ 3 giây...</small>';
     nextBtn.classList.add('d-none');
     nextBtn.disabled = true;
     skipPrepareBtn.style.display = 'none';
 
     startCountdown(TIME_CONFIG.BREAK_TIME, 'break', () => {
-      status.innerHTML = '<small class="text-primary">Chuẩn bị ghi (3s)...<br><strong>Bạn có thể bấm nút để bắt đầu ngay</strong></small>';
+      status.innerHTML = '<small class="text-primary">Chuẩn bị ghi (5s)...<br><strong>Bạn có thể bấm nút để bắt đầu ngay</strong></small>';
       skipPrepareBtn.style.display = 'block';
       skipPrepareBtn.querySelector('button').disabled = false;
       skipPrepareBtn.querySelector('button').textContent = 'Bắt đầu ghi ngay';
@@ -191,19 +191,23 @@ function showQuestion(idx) {
   updateProgress();
 
   stopTimer();
+  status.innerHTML = '<small class="text-primary">Chuẩn bị ghi (5s)...</small>';
   stopBtn.classList.add('d-none');
   nextBtn.classList.add('d-none');
   retryBtn?.classList.add('d-none');
   uploadStatus.innerHTML = '';
   recordedBlob = null;
-  if (video) video.srcObject = null;
+  if (video.srcObject) video.srcObject.getTracks().forEach(t => t.stop());
+  video.srcObject = null;
   skipPrepareBtn.style.display = 'none';
 
+  // Q1: CHỈ CÓ 3s CHUẨN BỊ GHI → GHI NGAY
   if (currentIdx === 0) {
-    status.innerHTML = '<small class="text-primary">Chuẩn bị câu hỏi...</small>';
-    startCountdown(TIME_CONFIG.QUESTION_PREPARE, 'question_prepare', handleQuestionPrepareComplete);
-  } else {
-    status.innerHTML = '';
+    startCountdown(TIME_CONFIG.PREPARE_TIME, 'prepare', handlePrepareComplete);
+  } 
+  // Q2: CÓ 5s NGHỈ + NÚT "BẮT ĐẦU GHI NGAY"
+  else {
+    startBreak();
   }
 }
 
