@@ -55,6 +55,7 @@
                     <th width="18%">Email</th>
                     <th width="12%">You are</th>
                     <th>Content</th>
+                    <th width="8%">Action</th> <!-- 🧠 PHẢI CÓ DÒNG NÀY -->
                   </tr>
                 </thead>
                 <tbody id="messagesTable">
@@ -114,6 +115,7 @@
           return;
         }
 
+            // ✅ Mỗi dòng có nút Delete
         tbody.innerHTML = data.messages.map(m => `
           <tr>
             <td><small class="text-muted">${m.time}</small></td>
@@ -123,12 +125,31 @@
             <td><small>${m.email}</small></td>
             <td>${m.role}</td>
             <td><small style="word-break:break-word;">${m.message}</small></td>
+            <td class="text-center">
+              <button class="btn btn-sm btn-danger" onclick="deleteMessage('${m.email || m.phone}')">🗑️</button>
+            </td>
           </tr>
         `).join('');
       } catch (err) {
         console.error(err);
         document.getElementById('messagesTable').innerHTML =
-          '<tr><td colspan="7" class="text-center text-danger">Cannot load messages</td></tr>';
+          '<tr><td colspan="8" class="text-center text-danger">Cannot load messages</td></tr>';
+      }
+    }
+
+
+    
+    async function deleteMessage(keyword) {
+      if (!confirm(`Bạn có chắc muốn xóa feedback của "${keyword}" không?`)) return;
+
+      const res = await fetch(`../Backend/api/contact.php?action=delete&keyword=${encodeURIComponent(keyword)}`);
+      const data = await res.json();
+
+      if (data.status === 'success') {
+        alert('Đã xóa thành công!');
+        loadMessages();
+      } else {
+        alert('Lỗi: ' + data.msg);
       }
     }
 
