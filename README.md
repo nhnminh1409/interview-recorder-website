@@ -46,20 +46,20 @@ It follows a client–server model: frontend calls backend APIs via fetch, backe
 ### Candidate Flow
 - Step 1 — Home Page (index.html)
 
-Show introduction + contact form.
+  - Show introduction + contact form.
 
-User clicks Start Interview → goes to token.html.
+  - User clicks Start Interview → goes to token.html.
 
 - Step 2 — Token Verification (token.html)
 
-User enters token
+  - User enters token
 
-Frontend sends:
+    Frontend sends:
 
-POST → Backend/api/verify-token.php
+    POST → Backend/api/verify-token.php
 
 
-Backend checks tokens.json:
+  - Backend checks tokens.json:
 
 If admin token → redirect to admin.html
 
@@ -76,34 +76,34 @@ User clicks “That’s me”
 ### Interview Flow (interview.html + js/recorder-v3.js)
 1. Load Questions
 
-Fetched from questions.json.
+- Fetched from questions.json.
 
 2. Create Session
 
-Call:
+- Call:
 
-Backend/api/session-start.php
+  - Backend/api/session-start.php
 
 
-Backend creates a folder in /uploads/ containing meta.json.
+  - Backend creates a folder in /uploads/ containing meta.json.
 
 3. Interview Logic
 
-10-second preparation countdown
+- 10-second preparation countdown
 
-Recording
+- Recording
 
-MediaRecorder (video + audio)
+- MediaRecorder (video + audio)
 
-Max 60 seconds
+- Max 60 seconds
 
-Live timer
+- Live timer
 
-Upload video
+- Upload video
 
-upload-one.php saves file as Q1.webm, Q2.webm, …
+- upload-one.php saves file as Q1.webm, Q2.webm, …
 
-meta.json is updated
+- meta.json is updated
 
 Transcription
 
@@ -116,15 +116,15 @@ Repeat for 5 questions
 
 4. Finish Session
 
-Call session-finish.php
+- Call session-finish.php
 
-Backend updates meta.json → status: completed
+- Backend updates meta.json → status: completed
 
 5. Final Screen
 
-Show Thank you
+- Show Thank you
 
-Token is marked as used in used_tokens.json.
+- Token is marked as used in used_tokens.json.
 
 ### Admin Flow
 Admin Access (admin.html)
@@ -496,16 +496,16 @@ flowchart TD
     class E admin
     class G error
 ```
-Note:
+- Note:
 
-Green: Start & End
+  - Green: Start & End
 
-Blue: User actions (token input)
+  - Blue: User actions (token input)
 
-Orange: Processing steps (recording, upload, transcribe…)
+  - Orange: Processing steps (recording, upload, transcribe…)
 
-Gray: Decision points & loops 
+  - Gray: Decision points & loops 
 
-Deep purple: Admin area
+  - Deep purple: Admin area
 
-Red: Error state
+  - Red: Error state
