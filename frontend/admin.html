@@ -162,7 +162,7 @@
     }
 
     async function viewSession(folder) {
-      const res = await fetch(`api/admin-api.php?action=view&folder=${folder}`);
+      const res = await fetch(`../Backend/api/admin-api.php?action=view&folder=${folder}`);
       const data = await res.json();
       if (!data.ok) return;
 
