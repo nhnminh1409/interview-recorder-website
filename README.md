@@ -1,8 +1,8 @@
 
-# INTERVIEWING WEB
+# INTERVIEW RECORDER WEBSITE
 # Overview
 
-`web_phong_van` is a website used to provide interviewers with an online interview method and to store interview results.
+`interview-recorder-website` is a website used to provide interviewers with an online interview method and to store interview results.
 This project aims to make the interviewing process easier. Candidates can participate in multinational interviews without needing to travel for an in-person interview. For employers, the website helps them save time and manpower during the recruitment process; in addition, the website allows employers to store the interview results of candidates.
 # 1. Main Project Structure
 ## 1.1 Main Project Structure (From Repository)
@@ -242,8 +242,8 @@ interview-recorder-website/
 # 5. INSTALLATION & DEPLOYMENT
 ## 5.1 Clone project
 ``` bash
-git clone https://github.com/nhnminh1409/web_phong_van
-cd web_phong_van
+git clone https://github.com/nhnminh1409/interview-recorder-website
+cd interview-recorder-website
 
 Pip install pandas
 ```
@@ -276,7 +276,7 @@ python RUN.py
 ## 5.4. How candidates access the system
 After tokens are generated and Apache is running, candidates access the interview by opening:
 ```perl
-http://<your-local-ip>/web_phong_van?token=<generated-token>
+http://<your-local-ip>/interview-recorder-website?token=<generated-token>
 ```
 
 # 6. DATABASE SCHEMA
