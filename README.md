@@ -2,7 +2,7 @@
 # INTERVIEW RECORDER WEBSITE
 # Overview
 
-`interview-recorder-website` is a website used to provide interviewers with an online interview method and to store interview results.
+  `interview-recorder-website` is a website used to provide interviewers with an online interview method and to store interview results.
 This project aims to make the interviewing process easier. Candidates can participate in multinational interviews without needing to travel for an in-person interview. For employers, the website helps them save time and manpower during the recruitment process; in addition, the website allows employers to store the interview results of candidates.
 # 1. Main Project Structure
 ## 1.1 Main Project Structure (From Repository)
