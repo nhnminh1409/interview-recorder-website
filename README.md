@@ -7,23 +7,17 @@ This project aims to make the interviewing process easier. Candidates can partic
 # 1. Main Project Structure
 ## 1.1 Main Project Structure (From Repository)
 
-Root Level:
-index.html (homepage), token.html (token verification), interview.html (interview page), admin.html (admin dashboard), questions.json (list of questions).
+- Root Level: index.html (homepage), token.html (token verification), interview.html (interview page), admin.html (admin dashboard), questions.json (list of questions).
 
-/js/:
-recorder-v3.js (recording logic, timer, upload), recorder.js (old version).
+- /js/: recorder-v3.js (recording logic, timer, upload), recorder.js (old version).
 
-/Backend/api/:
-PHP API files including:
-verify-token.php, session-start.php, upload-one.php, transcribe.php,
+- /Backend/api/: PHP API files including: verify-token.php, session-start.php, upload-one.php, transcribe.php,
 session-finish.php, admin-api.php, contact.php.
 
-/data/:
-tokens.json, used_tokens.json, questions.json (backup),
+- /data/: tokens.json, used_tokens.json, questions.json (backup),
 contact-messages.txt, interviewee.xlsx.
 
-/utils/:
-`generate_tokens
+- /utils/: generate_tokens
 ## 1.2 Main Features
 
 - Generate separate tokens for each candidate in the provided list.
