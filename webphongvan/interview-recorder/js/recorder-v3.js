@@ -1,3 +1,4 @@
+// RECORDER V7.0 – PHIÊN BẢN HOÀN HẢO CUỐI CÙNG (ĐÃ FIX HOÀN TOÀN)
 let recorder, stream, recordedBlob = null;
 const video = document.getElementById('videoPreview');
 const stopBtn = document.getElementById('stopBtn');
@@ -16,7 +17,7 @@ const MAX_SIZE = 200 * 1024 * 1024;
 const TIME_CONFIG = {
   QUESTION_PREPARE: 5,
   PREPARE_TIME: 3,
-  RECORDING_TIME: 10,
+  RECORDING_TIME: 60,
   BREAK_TIME: 5
 };
 
@@ -252,7 +253,7 @@ async function startRecording() {
 
     recorder.start();
     stopBtn.classList.remove('d-none');
-    status.innerHTML = '<small class="text-warning">Đang ghi... (10s)</small>';
+    status.innerHTML = '<small class="text-warning">Đang ghi... </small>';
     startCountdown(TIME_CONFIG.RECORDING_TIME, 'recording', handleRecordingComplete);
 
   } catch (err) {
@@ -347,7 +348,7 @@ function showCompletionMessage() {
   const card = document.querySelector('.interview-card');
   card.innerHTML = `
     <div class="text-center p-5">
-      <h1 class="text-success mb-4">Cảm ơn bạn đã tham gia phỏng vấn!</h1>
+      <h1 class="text-success mb-4">🎉 Cảm ơn bạn đã tham gia phỏng vấn!</h1>
       <p class="fs-5">Chúng tôi sẽ liên hệ lại với bạn sau khi xem xét câu trả lời.</p>
     </div>
   `;
