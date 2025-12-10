@@ -293,46 +293,45 @@ Upload includes:
 ```
 # 4. Project structure
 ``` text
-webphongvan/
-├── interview-recorder/
-│   ├── api/                  
-│   │   ├── admin-api.php                
-│   │   ├── contact.php                  
-│   │   ├── session-finish.php           
-│   │   ├── session-start.php            
-│   │   ├── transcribe.php               
-│   │   ├── upload-one.php               
-│   │   └── verify-token.php             
-│   │
-│   ├── assets/               
-│   ├── Candidates_YYYY-MM-DD/
-│   │   ├── interviewee.tokens        
-│   │   └── tokens_backup.json        
-│   │
-│   ├── ffmpeg/                
-│   │
-│   ├── js/                   
-│   │   ├── recorder.js          
-│   │   └── recorder-v3.js      
-│   ├── uploads/              
-│   ├── whisper/                  
-│   │
-│   ├── admin.html            
-│   ├── index.html            
-│   ├── interview.html        
-│   ├── token.html            
-│   │
-│   ├── contact-messages.txt  
-│   ├── generate_tokens.py    
-│   ├── icon.png              
-│   ├── icon1.png             
-│   ├── interviewee.xlsx      
-│   ├── questions.json        
-│   ├── tokens.json           
-│   └── RUN.bat               
+interview-recorder-website/
+├── Backend/
+│   ├── api/
+│   │   ├── admin-api.php
+│   │   ├── contact.php
+│   │   ├── session-finish.php
+│   │   ├── session-start.php
+│   │   ├── transcribe.php
+│   │   ├── upload-one.php
+│   │   └── verify-token.php
+│   ├── ffmpeg/
+│   └── whisper/
 │
-├── .gitattributes            
-└── README.md            
+├── assets/
+│   └── css/
+│       └── style.css
+│
+├── data/
+│   ├── contact-messages.txt
+│   ├── interviewee.xlsx
+│   ├── questions.json
+│   └── tokens.json
+│
+├── frontend/
+│   ├── js/
+│   │   ├── recorder.js
+│   │   └── recorder-v3.js
+│   ├── admin.html
+│   ├── index.html
+│   ├── interview.html
+│   ├── token.html
+│   ├── icon.png
+│   └── icon1.png
+│
+├── utils/
+│   ├── generate_tokens.py
+│   └── RUN.bat
+│
+└── README.md        
 
 
 ```
