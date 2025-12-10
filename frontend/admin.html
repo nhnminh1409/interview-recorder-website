@@ -103,38 +103,35 @@
     // Load danh sách tin nhắn từ contact-messages.txt
     async function loadMessages() {
       try {
-        const res = await fetch('../data/contact-messages.txt?t=' + Date.now());
-        const text = await res.text();
-        const lines = text.trim().split('\n').filter(line => line.includes('|') && line.trim() !== '');
+        const res = await fetch('../Backend/api/contact.php?action=list&t=' + Date.now());
+        const data = await res.json();
+        console.log('Feedback data:', data); // debug xem API trả gì
 
         const tbody = document.getElementById('messagesTable');
 
-        if (lines.length <= 1) {
+        if (!data.ok || !data.messages || data.messages.length === 0) {
           tbody.innerHTML = '<tr><td colspan="7" class="text-center py-5 text-muted">No messages</td></tr>';
           return;
         }
 
-        const dataLines = lines.slice(1).reverse();
-
-        tbody.innerHTML = dataLines.map(line => {
-          const cols = line.split(' | ').map(c => c.trim());
-          if (cols.length < 7) return '';
-
-          return `<tr>
-            <td><small class="text-muted">${cols[0]}</small></td>
-            <td><strong>${cols[1]}</strong></td>
-            <td>${cols[2]}</td>
-            <td>${cols[3]}</td>
-            <td><small>${cols[4] || '-'}</small></td>
-            <td>${cols[5] || 'Failed'}</td>
-            <td><small style="word-break:break-word;">${cols[6].replace(/\\n/g, '<br>')}</small></td>
-          </tr>`;
-        }).join('');
+        tbody.innerHTML = data.messages.map(m => `
+          <tr>
+            <td><small class="text-muted">${m.time}</small></td>
+            <td><strong>${m.name}</strong></td>
+            <td>${m.phone}</td>
+            <td>${m.year}</td>
+            <td><small>${m.email}</small></td>
+            <td>${m.role}</td>
+            <td><small style="word-break:break-word;">${m.message}</small></td>
+          </tr>
+        `).join('');
       } catch (err) {
-        document.getElementById('messagesTable').innerHTML = 
-          '<tr><td colspan="7" class="text-center text-danger">Data loading error</td></tr>';
+        console.error(err);
+        document.getElementById('messagesTable').innerHTML =
+          '<tr><td colspan="7" class="text-center text-danger">Cannot load messages</td></tr>';
       }
     }
+
 
     // Load danh sách buổi phỏng vấn
     async function loadSessions() {

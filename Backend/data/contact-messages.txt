@@ -1,0 +1,20 @@
+2025-12-10 17:59:50 | hhhhhh                    | dd              | d        |                                | Candidate       | rỷdtyrdty
+
+2025-12-10 18:17:05 | hhhhhh                    | dd              | d        |                                | Candidate       | dsfsdf
+
+2025-12-10 18:17:19 | hhhhhh                    | dd              | d        |                                | Candidate       | dsfsdf
+
+2025-12-10 18:21:08 | hhhhhh                    | d               | ddd      |                                | Candidate       | cvbcvbc
+
+2025-12-10 18:21:36 | hhhhhh                    | d               | d        |                                | Recruiter       | drgd
+
+2025-12-10 18:22:39 | Bình Nguyễn Văn       | dd              | d        |                                | Candidate       | zcxdf
+
+2025-12-10 18:24:05 | hhhhhh                    | d               | d        |                                | Candidate       | sfsef
+
+2025-12-10 18:24:28 | hhhhhh                    | dd              | d        |                                | Candidate       | scfsdf
+
+2025-12-10 18:51:38 | hhhhhh                    | d               | ddd      |                                | Candidate       | dfgdfg
+
+2025-12-10 19:00:40 | hhhhhh                    | dd              | ddd      |                                | Candidate       | dfdfgdf
+
