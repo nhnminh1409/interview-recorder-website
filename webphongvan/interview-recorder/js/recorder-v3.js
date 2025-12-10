@@ -1,4 +1,3 @@
-// RECORDER V7.0 – PHIÊN BẢN HOÀN HẢO CUỐI CÙNG (ĐÃ FIX HOÀN TOÀN)
 let recorder, stream, recordedBlob = null;
 const video = document.getElementById('videoPreview');
 const stopBtn = document.getElementById('stopBtn');
