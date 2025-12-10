@@ -57,18 +57,19 @@ The project operates on a client–server model: the frontend communicates with 
 2. **Create Session**  
    Call `Backend/api/session-start.php` → backend creates a new folder under `/uploads/` with `meta.json`.
 
-3. **Question Loop** (repeated for all 5 questions)  
-   - 10-second preparation countdown  
+3. **Question Loop** (repeated for all 5 questions)
+   - 5 seconds preparation countdown 
+   - 3 seconds countdown for reading question 
    - Recording using MediaRecorder (video + audio, max 60 seconds)  
    - Live timer displayed  
    - Auto upload after stop → `Backend/api/upload-one.php` saves as `Q1.webm`, `Q2.webm`, …  
    - Update `meta.json`  
    - Transcription: `transcribe.php` → FFmpeg extracts audio → Whisper → saves to `transcript.txt`
 
-4. **Finish Session**  
+5. **Finish Session**  
    Call `Backend/api/session-finish.php` → update `meta.json` status = `completed`.
 
-5. **Thank You Screen**  
+6. **Thank You Screen**  
    Token is permanently marked as used in `used_tokens.json`.
 
 ### Admin Flow (`admin.html`)
@@ -106,11 +107,11 @@ Accessed only via admin token.
 ## 2.2 Time Control System
 
 Each question has:  
-- **Answer time:** 10s  
+- **Answer time:** 60s
 - **Break time after question:**  5s  
 - **One break for preparation:** 3s
 During breaks, it can display:  
-  - “Start Recording”  
+- “Start Recording”  
 Countdown includes:  
 - Timer display mm:ss  
 - Progress bar  
@@ -119,11 +120,7 @@ Countdown includes:
 
 - Each candidate has a unique token  
 - Token check for existence
-- If invalid → return 
-- Token logs:  
-  - Log IP  
-  - Browser info  
-  - Device type  
+- If invalid → return "Token invalid"
 
 ## 2.4 Upload & Storage Module
 
@@ -154,11 +151,12 @@ Upload includes:
   - Camera preview  
 - Break screen:  
   - Remaining time  
-  - Instructions  
+  - Next question 
   - Skip button
 
 ## 2.6 Security & Basic Anti-Cheating (Tier 2+)
 - Token can be used only once → after session-start, mark used: true
+- If same token were used, return "Token used! Please contact to admin for support."
 - Each IP can enter a wrong token only 5 times → block for 15 minutes
 - Disable right-click, Ctrl+C, Ctrl+V on the interview page
 - Detect tab switching → pause recording + show warning
