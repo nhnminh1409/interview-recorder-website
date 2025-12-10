@@ -235,8 +235,7 @@ interview-recorder-website/
 ``` bash
 git clone https://github.com/nhnminh1409/interview-recorder-website
 cd interview-recorder-website
-
-Pip install pandas
+pip install pandas
 ```
 ## 5.2 Local Setup (XAMPP – Recommended)
 
@@ -261,13 +260,18 @@ Tokens are generated automatically using the **RUN** script.
 Run:
 
 ```bash
-python RUN.py
-
+/utils/RUN.bat
 ```
+List of generated tokens can be found in /Candidates.../interviewee_tokens.csv or /data/tokens.json.
+
 ## 5.4. How candidates access the system
 After tokens are generated and Apache is running, candidates access the interview by opening:
 ```perl
-http://<your-local-ip>/interview-recorder-website?token=<generated-token>
+http://<your-local-ip>/interview-recorder-website
+```
+## 5.5. Check used_tokens.
+```perl
+/data/used_tokens.json
 ```
 
 # 6. DATABASE SCHEMA
