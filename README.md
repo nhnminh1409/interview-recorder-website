@@ -34,155 +34,65 @@ contact-messages.txt, interviewee.xlsx.
 - Excel file to provide the candidate list. Python to generate tokens.
 
 ## 1.4 Overall Workflow
-The project has two main flows: Candidate and Admin.
-It follows a client–server model: frontend calls backend APIs via fetch, backend stores data in lightweight JSON/txt files.
+The project operates on a client–server model: the frontend communicates with the backend via `fetch` API calls. All data is stored lightly using JSON and text files.
 
 ### Candidate Flow
-- Step 1 — Home Page (index.html)
+- **Step 1 — Home Page** (`index.html`)  
+  Displays introduction and contact form.  
+  User clicks **Start Interview** → redirects to `token.html`.
 
-  - Show introduction + contact form.
+- **Step 2 — Token Verification** (`token.html`)  
+  User enters token → frontend calls:  
+  `POST → Backend/api/verify-token.php`  
+  → Backend checks `tokens.json`:  
+  • If **admin token** → redirect to `admin.html`  
+  • If **candidate token** → validate one-time use via `used_tokens.json`  
+    → If valid → display candidate name  
+    → User confirms “That’s me” → save token & name to `sessionStorage` → go to `interview.html`
 
-  - User clicks Start Interview → goes to token.html.
+### Interview Flow (`interview.html` + `js/recorder-v3.js`)
+1. **Load Questions**  
+   Fetched directly from `questions.json`.
 
-- Step 2 — Token Verification (token.html)
+2. **Create Session**  
+   Call `Backend/api/session-start.php` → backend creates a new folder under `/uploads/` with `meta.json`.
 
-  - User enters token
+3. **Question Loop** (repeated for all 5 questions)  
+   - 10-second preparation countdown  
+   - Recording using MediaRecorder (video + audio, max 60 seconds)  
+   - Live timer displayed  
+   - Auto upload after stop → `Backend/api/upload-one.php` saves as `Q1.webm`, `Q2.webm`, …  
+   - Update `meta.json`  
+   - Transcription: `transcribe.php` → FFmpeg extracts audio → Whisper → saves to `transcript.txt`
 
-    Frontend sends:
+4. **Finish Session**  
+   Call `Backend/api/session-finish.php` → update `meta.json` status = `completed`.
 
-    POST → Backend/api/verify-token.php
+5. **Thank You Screen**  
+   Token is permanently marked as used in `used_tokens.json`.
 
+### Admin Flow (`admin.html`)
+Accessed only via admin token.
 
-  - Backend checks tokens.json:
-
-If admin token → redirect to admin.html
-
-If candidate token:
-
-validate one-time rule via used_tokens.json
-
-if valid → show candidate name
-
-User clicks “That’s me”
-→ save token & username to sessionStorage
-→ redirect to interview.html
-
-### Interview Flow (interview.html + js/recorder-v3.js)
-1. Load Questions
-
-- Fetched from questions.json.
-
-2. Create Session
-
-- Call:
-
-  - Backend/api/session-start.php
-
-
-  - Backend creates a folder in /uploads/ containing meta.json.
-
-3. Interview Logic
-
-- 10-second preparation countdown
-
-- Recording
-
-- MediaRecorder (video + audio)
-
-- Max 60 seconds
-
-- Live timer
-
-- Upload video
-
-- upload-one.php saves file as Q1.webm, Q2.webm, …
-
-- meta.json is updated
-
-Transcription
-
-transcribe.php
-→ FFmpeg extract audio
-→ Whisper
-→ save transcript.txt
-
-Repeat for 5 questions
-
-4. Finish Session
-
-- Call session-finish.php
-
-- Backend updates meta.json → status: completed
-
-5. Final Screen
-
-- Show Thank you
-
-- Token is marked as used in used_tokens.json.
-
-### Admin Flow
-Admin Access (admin.html)
-
-Only from admin token.
-
-Main Actions
-
-List sessions
-
-admin-api.php?action=list
-
-
-Reads all folders in /uploads/, loads meta.json.
-
-View session details
-
-admin-api.php?action=view&folder=...
-
-
-Shows:
-
-Videos (Q1–Q5)
-
-Transcript
-
-Metadata
-
-Dashboard:
-
-Auto refresh every 5 seconds
-
-Modal video preview
+**Main Features:**
+- List all sessions → `admin-api.php?action=list`  
+  (reads all folders in `/uploads/` and their `meta.json`)
+- View detailed session → `admin-api.php?action=view&folder=...`  
+  Displays: videos (Q1–Q5), transcript, metadata
+- Dashboard auto-refreshes every 5 seconds
+- Modal video player for preview
 
 ### Support Flows
-Generate Tokens
+- **Generate Tokens**  
+  Run: `utils/generate_tokens.py`  
+  Reads `interviewee.xlsx` → auto-generates tokens → updates `tokens.json` & creates backup.
 
-Run:
+- **Contact Form**  
+  `index.html` → `Backend/api/contact.php` → appends message to `data/contact-messages.txt`.
 
-utils/generate_tokens.py
-
-
-Reads interviewee.xlsx
-
-Auto-generate tokens → update tokens.json.
-
-Contact Form
-
-index.html → contact.php
-
-Saved to:
-data/contact-messages.txt
-
-One-Time Token Logic
-
-After a candidate session starts:
-
-token is stored in used_tokens.json
-
-admin tokens bypass this rule
-
-generate_tokens.py
-
-Included script for automatically generating tokens from Excel lists.
+- **One-Time Token Rule**  
+  After a candidate starts the interview, their token is added to `used_tokens.json`.  
+  Admin tokens are exempt from this rule.
 # 2. SYSTEM FEATURES (FULL DETAILS)
 
 ## 2.1 Video Recording Engine
