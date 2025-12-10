@@ -97,12 +97,8 @@ Accessed only via admin token.
 
 ## 2.1 Video Recording Engine
 
-- Uses MediaRecorder API  
-- Supports codecs:  
-  - `video/webm;codecs=vp8`  
-  - `video/webm;codecs=vp9`  
+- Uses MediaRecorder API    
 - Live camera preview  
-- Auto fallback when codec is not supported  
 - Automatically stops when countdown = 0  
 - Saves video as blob, then uploads via Fetch  
 - Re-encoding compatibility with ffmpeg (server-side)  
@@ -122,13 +118,10 @@ Countdown includes:
 ## 2.3 Token Authentication
 
 - Each candidate has a unique token  
-- Token checks:  
-  1. Existence  
-  2. Not expired  
-  3. Not used  
-- If invalid → redirect to error page  
+- Token check for existence
+- If invalid → return 
 - Token logs:  
-  - CPU visited  
+  - Log IP  
   - Browser info  
   - Device type  
 
