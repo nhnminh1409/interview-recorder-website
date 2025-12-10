@@ -5,7 +5,7 @@ header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST');
 header('Access-Control-Allow-Headers: Content-Type');
 
-$file = __DIR__ . '/../data/contact-messages.txt';
+$file = __DIR__ . '/../../data/contact-messages.txt';
 $action = $_GET['action'] ?? '';
 
 // =============================
