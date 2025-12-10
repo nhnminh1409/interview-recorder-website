@@ -19,6 +19,7 @@
       padding: 35px;
       max-width: 760px;
       margin: 0 auto;
+      position: relative;
     }
     .progress { height: 10px; border-radius: 10px; background: #e0e0e0; margin-bottom: 30px; overflow: hidden; }
     .progress-bar { background: linear-gradient(90deg, #667eea, #764ba2); transition: width 0.6s ease; }
@@ -34,31 +35,82 @@
     #videoPreview {
       width: 100%; height: 420px; object-fit: cover; border-radius: 18px;
       background: #000; box-shadow: 0 15px 40px rgba(0,0,0,0.25);
+      position: relative;
     }
-    .btn-rec {
-      height: 58px; min-width: 200px; font-size: 1.15rem; font-weight: 600;
-      border-radius: 16px; margin: 0 10px; box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+
+    /* ĐỒNG HỒ NHỎ + GÓC PHẢI TRÊN VIDEO */
+    .timer-wrapper {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      width: 90px;
+      height: 90px;
+      z-index: 10;
+    }
+    .timer-circle {
+      width: 100%; height: 100%;
+      background: conic-gradient(#667eea 0%, #764ba2 100%);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+    }
+    .timer-inner {
+      width: 78px; height: 78px;
+      background: rgba(0,0,0,0.75);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.6rem;
+      font-weight: 900;
+      color: white !important;
+    }
+
+    .status { text-align: center; margin: 25px 0; font-size: 1.15rem; color: #444; font-weight: 500; }
+
+    /* NÚT "BẮT ĐẦU GHI NGAY" – BIỂU TƯỢNG PLAY TRÒN */
+    #skipPrepareBtn {
+      width: 90px; height: 90px;
+      border-radius: 50%;
+      background: #4361ee;
+      border: none;
+      font-size: 3.2rem;
+      color: white;
+      box-shadow: 0 12px 35px rgba(67,97,238,0.5);
+      transition: all 0.3s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    #skipPrepareBtn:hover {
+      transform: scale(1.12);
+      box-shadow: 0 20px 50px rgba(67,97,238,0.7);
+    }
+
+    /* NÚT STOP – BIỂU TƯỢNG VUÔNG */
+    #stopBtn {
+      width: 60px; height: 60px;
+      border-radius: 16px;
+      background: #ef4444;
+      border: none;
+      font-size: 2rem;
+      color: white;
+      box-shadow: 0 8px 25px rgba(239,68,68,0.7);
       transition: all 0.3s;
     }
-    .btn-rec:hover { transform: translateY(-3px); box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
-    .status { text-align: center; margin: 25px 0; font-size: 1.15rem; color: #444; font-weight: 500; }
-    #uploadStatus { display:none; }
+    #stopBtn:hover {
+      transform: scale(1.1);
+      box-shadow: 0 15px 40px rgba(239,68,68,0.7);
+    }
 
-    /* Màn hình cảm ơn */
     .thankyou {
       text-align: center;
-      padding: 80px 20px;
+      padding: 120px 20px;
+      color: #333;
     }
-    .thankyou h1 {
-      font-size: 2.5rem;
-      font-weight: 700;
-      color: #4facfe;
-      margin-bottom: 20px;
-    }
-    .thankyou p {
-      font-size: 1.2rem;
-      color: #555;
-    }
+    .thankyou h1 { font-size: 4rem; color: #667eea; font-weight: 900; }
   </style>
 </head>
 <body>
@@ -69,92 +121,54 @@
 
     <div class="question-box">
       <div id="questionText">Câu hỏi sẽ hiển thị ở đây</div>
-      <div>Question <span id="currentQ">1</span> of <span id="totalQ">5</span></div>
+      <div class="mt-2">Câu <span id="currentQ">1</span> / <span id="totalQ">5</span></div>
     </div>
 
-    <div class="text-center mb-4">
+    <div class="text-center position-relative mb-4">
       <video id="videoPreview" autoplay muted playsinline></video>
-      <p id="status" class="status">Recording will start automatically</p>
-    </div>
-
-    <div class="text-center mb-4">
-      <div id="timerDisplay" class="timer-circle">
-        <span class="timer-text">--:--</span>
+      
+      <!-- ĐỒNG HỒ Ở GÓC PHẢI TRÊN VIDEO -->
+      <div class="timer-wrapper">
+        <div class="timer-circle">
+          <div class="timer-inner">
+            <span id="timerDisplay" class="timer-text">01:00</span>
+          </div>
+        </div>
       </div>
+
+      <p id="status" class="status mt-3">Sẵn sàng – Bấm nút để bắt đầu</p>
     </div>
 
+    <!-- NÚT "BẮT ĐẦU GHI NGAY" – CHỈ HIỆN TRƯỚC KHI GHI (BIỂU TƯỢNG PLAY) -->
     <div class="text-center">
-      <button id="stopBtn" class="btn btn-warning btn-rec d-none">Stop Recording</button>
-      <button id="nextBtn" class="btn btn-success btn-rec d-none">Next →</button>
-      <button id="retryBtn" class="btn btn-outline-secondary mt-3 d-none">Retry Upload</button>
+      <button id="skipPrepareBtn" class="btn d-none">
+        ▶
+      </button>
     </div>
 
-    <div id="uploadStatus"></div>
+    <!-- NÚT STOP – CHỈ HIỆN KHI ĐANG GHI (BIỂU TƯỢNG VUÔNG) -->
+    <div class="text-center mt-4">
+      <button id="stopBtn" class="btn d-none">
+        ■
+      </button>
+    </div>
+
+    <!-- CÁC NÚT KHÁC (BẮT BUỘC CHO recorder-v3.js) -->
+    <div class="text-center mt-4">
+      <button id="nextBtn" class="btn btn-primary btn-lg d-none">Tiếp tục →</button>
+      <button id="retryBtn" class="btn btn-outline-secondary mt-3 d-none">Thử lại upload</button>
+    </div>
+
+    <div id="uploadStatus" class="mt-4"></div>
   </div>
 
-  <!-- Màn hình cảm ơn (ẩn ban đầu) -->
+  <!-- MÀN HÌNH CẢM ƠN -->
   <div id="thankyouSection" class="thankyou d-none">
-    <h1>Cảm ơn bạn đã tham gia phỏng vấn!</h1>
-    <p>Chúng tôi sẽ liên hệ lại với bạn sau khi xem xét câu trả lời.</p>
+    <h1>HOÀN TẤT PHỎNG VẤN!</h1>
+    <p>Cảm ơn bạn đã tham gia ❤️</p>
+    <p class="fs-4 mt-4">Bạn có thể đóng tab này.</p>
   </div>
 
   <script src="js/recorder-v3.js"></script>
-
-  <script>
-    const stopBtn = document.getElementById('stopBtn');
-    const nextBtn = document.getElementById('nextBtn');
-    const retryBtn = document.getElementById('retryBtn');
-    const statusText = document.getElementById('status');
-    const uploadStatus = document.getElementById('uploadStatus');
-    const currentQ = document.getElementById('currentQ');
-    const totalQ = document.getElementById('totalQ');
-    const interviewSection = document.getElementById('interviewSection');
-    const thankyouSection = document.getElementById('thankyouSection');
-
-    function updateNextButton() {
-      nextBtn.textContent = (parseInt(currentQ.textContent) === parseInt(totalQ.textContent)) 
-                            ? "Finish" 
-                            : "Next →";
-    }
-
-    window.addEventListener('load', () => {
-      statusText.textContent = "Recording...";
-      if (typeof startRecording === "function") startRecording();
-      stopBtn.classList.remove('d-none');
-      uploadStatus.textContent = "";
-      updateNextButton();
-    });
-
-    stopBtn.addEventListener('click', () => {
-      stopBtn.classList.add('d-none');
-      nextBtn.classList.remove('d-none');
-      statusText.textContent = "Recording stopped. Ready for next question.";
-      if (typeof stopRecording === "function") stopRecording();
-      uploadStatus.textContent = "";
-      updateNextButton();
-    });
-
-    nextBtn.addEventListener('click', () => {
-      if (parseInt(currentQ.textContent) === parseInt(totalQ.textContent)) {
-        // Hiện màn hình cảm ơn ngay tại chỗ
-        interviewSection.classList.add('d-none');
-        thankyouSection.classList.remove('d-none');
-        return;
-      }
-      nextBtn.classList.add('d-none');
-      statusText.textContent = "Preparing next question...";
-      if (typeof nextQuestion === "function") nextQuestion();
-      setTimeout(updateNextButton, 100);
-    });
-
-    retryBtn.addEventListener('click', () => {
-      uploadStatus.textContent = "Retrying upload...";
-      retryBtn.classList.add('d-none');
-      if (typeof retryUpload === "function") retryUpload();
-    });
-
-    const observer = new MutationObserver(() => uploadStatus.textContent = "");
-    observer.observe(uploadStatus, { childList: true, characterData: true, subtree: true });
-  </script>
 </body>
 </html>
