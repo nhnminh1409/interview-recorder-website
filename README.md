@@ -50,50 +50,105 @@ The project operates on a client–server model: the frontend communicates with 
     → If valid → display candidate name  
     → User confirms “That’s me” → save token & name to `sessionStorage` → go to `interview.html`
 
-### Interview Flow (`interview.html` + `js/recorder-v3.js`)
+### Full Interview Flow 
+
 1. **Load Questions**  
-   Fetched directly from `questions.json`.
+   **Frontend** (`interview.html` + `js/recorder-v3.js`)  
+   → Reads questions directly from `questions.json` (currently 3 fixed questions).
 
 2. **Create Session**  
-   Call `Backend/api/session-start.php` → backend creates a new folder under `/uploads/` with `meta.json`.
+   **Frontend**
+      → Calls `POST Backend/api/session-start.php` with token from URL (`?t=…`)  
+   **Backend** (`session-start.php`)  
+   → Checks `Backend/used_tokens.json` → blocks reuse if token already exists  
+   → Creates timestamped folder in `/uploads/` with exact format:  
+     `DD.MM.YYYY_HH.MM_SS_CandidateName`  
+   → Creates `meta.json` inside the folder (contains start time, status = "in_progress")  
+   → Adds token to `used_tokens.json` → link becomes permanently one-time-use.
 
-3. **Question Loop** (repeated for all 5 questions)
-   - 5 seconds preparation countdown 
-   - 3 seconds countdown for reading question 
-   - Recording using MediaRecorder (video + audio, max 60 seconds)  
-   - Live timer displayed  
-   - Auto upload after stop → `Backend/api/upload-one.php` saves as `Q1.webm`, `Q2.webm`, …  
-   - Update `meta.json`  
-   - Transcription: `transcribe.php` → FFmpeg extracts audio → Whisper → saves to `transcript.txt`
+3. **Question Loop** (repeated exactly 3 times)  
+   **Frontend**  
+    - 5 seconds preparation countdown  
+    - 3 seconds countdown for reading question  
+    - Records video + audio using MediaRecorder (max 60 seconds)  
+    - Displays live timer  
+    - Auto stops and uploads when finished  
+    → Calls `POST Backend/api/upload-one.php`  
+
+   **Backend** (`upload-one.php`)  
+   → Receives `token`, `question` (1–3), video file (`.webm`), and `duration`  
+   → Saves video as: `Q1.webm`, `Q2.webm`, `Q3.webm` inside candidate’s folder  
+   → Updates `questions` array in `meta.json`  
+   → Immediately triggers transcription (see step 4).
+
+4. **Transcription – Speech-to-Text** (auto after each upload)  
+   **Backend** (`upload-one.php` → calls `transcribe.php`)  
+   → **FFmpeg** (in `ffmpeg/` folder):  
+        Extracts audio from the latest `.webm` → creates temporary `temp.wav`  
+   → **Whisper.cpp** (in `whisper/` folder + `ggml-base.en.bin` model):  
+        Runs local AI speech recognition → appends recognized text to `transcript.txt`  
+        (adds header like "Question 1:", "Question 2:", etc.)  
+   → Final result: one single `transcript.txt` containing all 3 answers in order  
+   → Deletes `temp.wav` right after processing.
 
 5. **Finish Session**  
-   Call `Backend/api/session-finish.php` → update `meta.json` status = `completed`.
+   **Frontend** → After last question, calls `POST Backend/api/session-finish.php`  
+   **Backend** (`session-finish.php`)  
+   → Opens `meta.json` → sets `status = "completed"` and writes `completed_at` timestamp.
 
-6. **Thank You Screen**  
-   Token is permanently marked as used in `used_tokens.json`.
+6. **Thank You Screen + Final Storage**  
+   **Frontend** → Shows "Thank you" message and disables the link.  
+   **Backend** → Interview is now fully saved and ready for review.  
 
-### Admin Flow (`admin.html`)
-Accessed only via admin token.
+   **Final folder structure (exactly what you see in real uploads):**
+``` text
+uploads/
+└── DD.MM.YYYY_HH.MM_SS_CandidateName/
+├── meta.json          ← metadata, timestamps, status
+├── Q1.webm            ← Answer 1 video
+├── Q2.webm            ← Answer 2 video
+├── Q3.webm            ← Answer 3 video
+└── transcript.txt     ← Full auto transcript of all answers
+```
+### Admin Review Flow 
 
-**Main Features:**
-- List all sessions → `admin-api.php?action=list`  
-  (reads all folders in `/uploads/` and their `meta.json`)
-- View detailed session → `admin-api.php?action=view&folder=...`  
-  Displays: videos (Q1–Q5), transcript, metadata
-- Dashboard auto-refreshes every 5 seconds
-- Modal video player for preview
+1. **Access Results**  
+   Open the `/uploads/` folder directly on the server (via file manager, FTP, or shared drive).
 
-### Support Flows
-- **Generate Tokens**  
-  Run: `utils/generate_tokens.py`  
-  Reads `interviewee.xlsx` → auto-generates tokens → updates `tokens.json` & creates backup.
+2. **List All Submissions**  
+   Each completed interview is a clearly named, timestamped folder:
+``` text
+uploads/
+├── 10.12.2025_23.51_Nguyen_Van_A/
+├── 11.12.2025_00.01_Pham_Thi_B/
+└── ...
+```
+3. **View Any Submission**  
+``` text
+Open the candidate’s folder → all files ready instantly:
+├── meta.json          
+├── Q1.webm           
+├── Q2.webm      
+├── Q3.webm           
+└── transcript.txt     
+```
+4. **Play Videos**  
+Double-click any `.webm` file → plays immediately in browser or any video player.
 
-- **Contact Form**  
-  `index.html` → `Backend/api/contact.php` → appends message to `data/contact-messages.txt`.
+5. **Read Transcript**  
+Open `transcript.txt` → read everything the candidate said, perfectly formatted.
 
-- **One-Time Token Rule**  
-  After a candidate starts the interview, their token is added to `used_tokens.json`.  
-  Admin tokens are exempt from this rule.
+### Support & Utility Features 
+
+1. **One-Time Token Rule**  
+Every link works exactly once.  
+As soon as the candidate starts → token is added to `Backend/used_tokens.json` → reuse is blocked forever.
+
+2. **Generate Tokens Anytime**  
+Run the included script:
+```bash
+python utils/generate_tokens.py
+```
 # 2. SYSTEM FEATURES (FULL DETAILS)
 
 ## 2.1 Video Recording Engine
@@ -153,14 +208,6 @@ Upload includes:
   - Remaining time  
   - Next question 
   - Skip button
-
-## 2.6 Security & Basic Anti-Cheating (Tier 2+)
-- Token can be used only once → after session-start, mark used: true
-- If same token were used, return "Token used! Please contact to admin for support."
-- Each IP can enter a wrong token only 5 times → block for 15 minutes
-- Disable right-click, Ctrl+C, Ctrl+V on the interview page
-- Detect tab switching → pause recording + show warning
-- Video must have a face occupying >40% of the frame (simple detection using face-api.js – bonus feature)
 
 # 3. SYSTEM ARCHITECTURE
 ```text
