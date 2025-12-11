@@ -321,39 +321,8 @@ http://<your-local-ip>/interview-recorder-website
 /data/used_tokens.json
 ```
 
-# 6. DATABASE SCHEMA
-``` sql
-CREATE TABLE tokens (
-    id SERIAL PRIMARY KEY,
-    token VARCHAR(64) UNIQUE NOT NULL,
-    candidate_name VARCHAR(255),
-    email VARCHAR(255),
-    expires_at TIMESTAMP,
-    used BOOLEAN DEFAULT FALSE,
-    created_at TIMESTAMP DEFAULT NOW()
-);
-
-CREATE TABLE interview_results (
-    id SERIAL PRIMARY KEY,
-    token VARCHAR(64) REFERENCES tokens(token),
-    question_number INTEGER NOT NULL,
-    video_path TEXT NOT NULL,
-    duration INTEGER,
-    filesize BIGINT,
-    created_at TIMESTAMP DEFAULT NOW()
-);
-
-CREATE TABLE logs (
-    id SERIAL PRIMARY KEY,
-    token VARCHAR(64),
-    event TEXT,
-    metadata JSON,
-    created_at TIMESTAMP DEFAULT NOW()
-);
-```
-
-# 7. API DOCUMENTATION (FULL)
-## 7.1 Check token
+# 6. API DOCUMENTATION (FULL)
+## 6.1 Check token
 POST /api/check-token
 Request:
 ``` json
@@ -368,7 +337,7 @@ Response:
  
 
 ```
-## 7.2 Upload video
+## 6.2 Upload video
 POST /api/upload-video
 
 FormData:
@@ -385,7 +354,7 @@ Response:
 "video_path": "/records/abc123/1.webm"
 
 ```
-## 7.3 Mark interview complete
+## 6.3 Mark interview complete
 
 POST /api/complete
 
@@ -394,7 +363,7 @@ Response:
 "status": "ok" 
 ```
 
-## 8. INTERVIEW FLOW DIAGRAM (ASCII)
+## 7. INTERVIEW FLOW DIAGRAM 
 ``` mermaid
 flowchart TD
     A[Start: index.html - Home Page] 
