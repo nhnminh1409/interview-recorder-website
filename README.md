@@ -286,96 +286,8 @@ interview-recorder-website/
 │   └── RUN.bat                     #(quick run generate_tokens.py)
 │
 └── uploads/                        #(Store interview videos)        
-
-
 ```
-# 5. INSTALLATION & DEPLOYMENT
-## 5.1 Clone project
-``` bash
-git clone https://github.com/nhnminh1409/interview-recorder-website
-cd interview-recorder-website
-pip install pandas
-```
-## 5.2 Local Setup (XAMPP – Recommended)
-
-This project is designed to run using a local web server via **XAMPP Apache**.
-
-### Steps:
-``` sql
-1. Install and open **XAMPP Control Panel**  
-2. Start the **Apache** service  
-3. Copy the entire project folder
-4. Get the computer’s local IP address (the machine running XAMPP).
-```
-
-You will use this IP to access the interview page from any device on the same network.
-
----
-
-## 5.3 Token Generator (Python)
-
-Tokens are generated automatically using the **RUN** script.
-
-Run:
-
-```bash
-/utils/RUN.bat
-```
-List of generated tokens can be found in /Candidates.../interviewee_tokens.csv or /data/tokens.json.
-
-## 5.4. How candidates access the system
-After tokens are generated and Apache is running, candidates access the interview by opening:
-```perl
-http://<your-local-ip>/interview-recorder-website
-```
-## 5.5. Check used_tokens.
-```perl
-/data/used_tokens.json
-```
-
-# 6. API DOCUMENTATION (FULL)
-## 6.1 Check token
-POST /api/check-token
-Request:
-``` json
- "token": "abc123" 
-```
-
-Response:
-``` json
-
-  "valid": true,
-  "candidate": "Nguyen Van A",
- 
-
-```
-## 6.2 Upload video
-POST /api/upload-video
-
-FormData:
-``` makefile
-token: abc123
-question: 1
-file: <blob>
-```
-
-Response:
-``` json
-
-"status": "success",
-"video_path": "/records/abc123/1.webm"
-
-```
-## 6.3 Mark interview complete
-
-POST /api/complete
-
-Response:
-``` json
-"status": "ok" 
-```
-
-## 7. INTERVIEW FLOW DIAGRAM 
+## 5. INTERVIEW FLOW DIAGRAM 
 ``` mermaid
 flowchart TD
     A[Start: index.html - Home Page] 
@@ -435,3 +347,89 @@ flowchart TD
   - Deep purple: Admin area
 
   - Red: Error state
+# 6. INSTALLATION & DEPLOYMENT
+## 6.1 Clone project
+``` bash
+pip install pandas openpyxl
+
+git clone https://github.com/nhnminh1409/interview-recorder-website
+cd interview-recorder-website
+```
+## 6.2 Local Setup (XAMPP – Recommended)
+
+This project is designed to run using a local web server via **XAMPP Apache**.
+
+### Steps:
+``` sql
+1. Install and open **XAMPP Control Panel**  
+2. Start the **Apache** service  
+3. Copy the entire project folder to htdocs/.
+4. Get the computer’s local IP address (the machine running XAMPP).
+```
+
+You will use this IP to access the interview page from any device on the same network.
+
+---
+
+## 6.3 Token Generator (Python)
+Tokens are generated automatically using the **RUN** script.
+Run:
+```bash
+py utils/generate_tokens.py
+```
+or
+```bash
+python utils/generate_tokens.py
+```
+or
+```perl
+/utils/RUN.bat #Easiest way
+```
+List of generated tokens can be found in /Candidates.../interviewee_tokens.csv or /data/tokens.json.
+
+## 6.4. How candidates access the system
+After tokens are generated and Apache is running, candidates access the interview by opening:
+```perl
+http://<your-local-ip>/interview-recorder-website/frontend
+```
+## 6.5. Check used_tokens.
+```perl
+/data/used_tokens.json
+```
+# 7. API DOCUMENTATION (FULL)
+## 7.1 Check token
+POST /api/check-token
+Request:
+``` json
+ "token": "abc123" 
+```
+
+Response:
+``` json
+  "valid": true,
+  "candidate": "Nguyen Van A",
+ 
+```
+## 7.2 Upload video
+POST /api/upload-video
+
+FormData:
+``` makefile
+token: abc123
+question: 1
+file: <blob>
+```
+
+Response:
+``` json
+"status": "success",
+"video_path": "/records/abc123/1.webm"
+```
+## 7.3 Mark interview complete
+
+POST /api/complete
+
+Response:
+``` json
+"status": "ok" 
+```
