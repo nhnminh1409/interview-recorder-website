@@ -29,27 +29,39 @@ contact-messages.txt, interviewee.xlsx.
 
 ## 1.3 Technologies Used
 
-- Front-end: HTML / CSS / Javascript / JSON
-- Back-end: PHP / FFPRESET, whisper AI
-- Excel file to provide the candidate list. Python to generate tokens.
-
+### 1.3.1. Front-end: 
+- HTML: Core markup for pages like `index.html` (home), `token.html` (auth), `interview.html` (recording UI), and `admin.html` (dashboard).
+- CSS: Styling and responsive layout via `style.css` in `/assets/css/`. Bootstrap handles grid, components (e.g., buttons, modals).
+- Javascript: Dynamic behavior: `recorder-v3.js` manages timers (10s countdown), MediaRecorder API for webcam/mic capture, Fetch API for uploads, and session storage. Legacy: `recorder.js`
+- JSON: Data interchange: `questions.json` for interview prompts; parsed via `fetch()`.
+- MediaRecorder API: Browser-native API for recording video/audio streams as WebM blobs during interviews.
+### 1.3.2. Back-end
+- PHP: Core backend language for API endpoints (e.g., `verify-token.php` for auth, `upload-one.php` for file handling, `transcribe.php` for AI pipeline). Manages token validation, session folders in `/uploads/`, and JSON file I/O.
+### 1.3.3. Processing and Media Handling
+- FFPRESET: Command-line tool invoked via PHP `shell_exec()` to extract audio (MP3) from uploaded WebM videos (e.g., -i Q1.webm -vn -ar 16000 -ac 1 audio.mp3).
+- Whisper AI: OpenAI's speech-to-text model for transcribing extracted audio to `transcript.txt` (English-only; e.g., `whisper audio.mp3 --model base --output_format txt`)
+### 1.3.4. Utilities and Data Management
+- Python: Utility scripting: `generate_tokens.py` reads `interviewee.xlsx`, generates random alphanumeric tokens (32 chars), and populates `tokens.json`.
+- Pandas: Data manipulation in Python: Parses Excel files and exports JSON/CSV for tokens.
+- Excel(xlsx): Input format for candidate lists (`interviewee.xlsx` columns: Name, Email).
+  
 ## 1.4 Overall Workflow
-The project operates on a client–server model: the frontend communicates with the backend via `fetch` API calls. All data is stored lightly using JSON and text files.
+This section provides a complete, end-to-end overview of how the system operates, covering token generation, candidate experience, recording process, backend processing, and admin review.
 
-### Candidate Flow
-- **Step 1 — Home Page** (`index.html`)  
-  Displays introduction and contact form.  
-  User clicks **Start Interview** → redirects to `token.html`.
+### 1. Token Generation (Preparation Phase – Admin/HR)
 
-- **Step 2 — Token Verification** (`token.html`)  
-  User enters token → frontend calls:  
-  `POST → Backend/api/verify-token.php`  
-  → Backend checks `tokens.json`:  
-  • If **admin token** → redirect to `admin.html`  
-  • If **candidate token** → validate one-time use via `used_tokens.json`  
-    → If valid → display candidate name  
-    → User confirms “That’s me” → save token & name to `sessionStorage` → go to `interview.html`
-
+1. HR prepares a list of candidates in data/interviewee.xlsx (columns: Name, Email).
+2. Run the utility script:
+   ```bash
+   python utils/generate_tokens.py (or via RUN.bat).
+   ```
+3. The script:
+- Reads the Excel file using Pandas.
+- Generates unique 32-character alphanumeric tokens.
+- Assigns expiration (default configurable).
+- Writes all valid tokens to `data/tokens.json`.
+4. Tokens are distributed to candidates via email or secure channel.
+   
 ### Interview Flow (`interview.html` + `js/recorder-v3.js`)
 1. **Load Questions**  
    Fetched directly from `questions.json`.
@@ -71,7 +83,49 @@ The project operates on a client–server model: the frontend communicates with 
 
 6. **Thank You Screen**  
    Token is permanently marked as used in `used_tokens.json`.
+2. Candidate Interview Process
 
+### 1. Access the Site
+- Candidate opens `index.html` (home page).
+- Clicks "Start Interview" → redirected to `token.html`.
+
+### 2. Token Authentication
+- Candidate enters the one-time token.
+- Frontend POSTs to `Backend/api/verify-token.php`.
+- Backend checks:
+  - Token exists in `tokens.json`.
+  - Token not in `used_tokens.json`.
+  - IP-based rate limiting (max 5 failed attempts → 15-minute block).  
+- On success: Stores token in `sessionStorage`, displays candidate name, proceeds to `interview.html`.
+- On failure: Shows error (invalid/used/expired).
+
+### 3. Interview Session Start
+session-start.php creates a dedicated folder: uploads/<token>/.
+Loads questions from data/questions.json (array of question objects).
+Initializes meta.json for tracking progress.
+
+### 4. Question Loop (Per Question)
+Display current question text.
+10-second countdown (preparation timer).
+Automatically start recording:
+Uses browser MediaRecorder API (webcam + microphone).
+Records for maximum 60 seconds (stops early if candidate clicks "Stop").
+Output: WebM format blob.
+
+
+After recording:
+Upload blob to upload-one.php → saved as Q1.webm, Q2.webm, etc., in session folder.
+Backend triggers transcribe.php:
+FFmpeg extracts audio → audio.mp3.
+Whisper (local model) transcribes → appends to transcript.txt.
+Update meta.json with duration, timestamp.
+
+### 5. Completion
+After last question:
+Call session-finish.php.
+Marks token as used (adds to used_tokens.json).
+Displays "Thank You" page.
+Token is now permanently locked.
 ### Admin Flow (`admin.html`)
 Accessed only via admin token.
 
