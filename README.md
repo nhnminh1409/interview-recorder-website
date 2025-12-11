@@ -63,33 +63,11 @@ This section provides a complete, end-to-end overview of how the system operates
 4. Tokens are distributed to candidates via email or secure channel.
    
 ### Interview Flow (`interview.html` + `js/recorder-v3.js`)
-1. **Load Questions**  
-   Fetched directly from `questions.json`.
-
-2. **Create Session**  
-   Call `Backend/api/session-start.php` → backend creates a new folder under `/uploads/` with `meta.json`.
-
-3. **Question Loop** (repeated for all 5 questions)
-   - 5 seconds preparation countdown 
-   - 3 seconds countdown for reading question 
-   - Recording using MediaRecorder (video + audio, max 60 seconds)  
-   - Live timer displayed  
-   - Auto upload after stop → `Backend/api/upload-one.php` saves as `Q1.webm`, `Q2.webm`, …  
-   - Update `meta.json`  
-   - Transcription: `transcribe.php` → FFmpeg extracts audio → Whisper → saves to `transcript.txt`
-
-5. **Finish Session**  
-   Call `Backend/api/session-finish.php` → update `meta.json` status = `completed`.
-
-6. **Thank You Screen**  
-   Token is permanently marked as used in `used_tokens.json`.
-2. Candidate Interview Process
-
-### 1. Access the Site
+#### 1. Access the Site
 - Candidate opens `index.html` (home page).
 - Clicks "Start Interview" → redirected to `token.html`.
 
-### 2. Token Authentication
+#### 2. Token Authentication
 - Candidate enters the one-time token.
 - Frontend POSTs to `Backend/api/verify-token.php`.
 - Backend checks:
@@ -99,33 +77,33 @@ This section provides a complete, end-to-end overview of how the system operates
 - On success: Stores token in `sessionStorage`, displays candidate name, proceeds to `interview.html`.
 - On failure: Shows error (invalid/used/expired).
 
-### 3. Interview Session Start
-session-start.php creates a dedicated folder: uploads/<token>/.
-Loads questions from data/questions.json (array of question objects).
-Initializes meta.json for tracking progress.
+#### 3. Interview Session Start
+- `session-start.php` creates a dedicated folder `uploads/<token>/`.
+- Loads questions from `data/questions.json` (array of question objects).
+- Initializes `meta.json` for tracking progress.
 
-### 4. Question Loop (Per Question)
-Display current question text.
-10-second countdown (preparation timer).
-Automatically start recording:
-Uses browser MediaRecorder API (webcam + microphone).
-Records for maximum 60 seconds (stops early if candidate clicks "Stop").
-Output: WebM format blob.
+#### 4. Question Loop (Per Question)
+- Display current question text.
+- 10-second countdown (preparation timer).
+- Automatically start recording:
+  - Uses browser MediaRecorder API (webcam + microphone).
+  - Records for maximum 60 seconds (stops early if candidate clicks "Stop").
+  - Output: WebM format blob.
 
 
-After recording:
-Upload blob to upload-one.php → saved as Q1.webm, Q2.webm, etc., in session folder.
-Backend triggers transcribe.php:
-FFmpeg extracts audio → audio.mp3.
-Whisper (local model) transcribes → appends to transcript.txt.
-Update meta.json with duration, timestamp.
+- After recording:
+  - Upload blob to upload-one.php → saved as Q1.webm, Q2.webm, etc., in session folder.
+  - Backend triggers transcribe.php:
+    - FFmpeg extracts audio → audio.mp3.
+    - Whisper (local model) transcribes → appends to transcript.txt.
+  - Update `meta.json` with duration, timestamp.
 
-### 5. Completion
-After last question:
-Call session-finish.php.
-Marks token as used (adds to used_tokens.json).
-Displays "Thank You" page.
-Token is now permanently locked.
+#### 5. Completion
+- After last question:
+  - Call `session-finish.php`.
+  - Marks token as used (adds to `used_tokens.json`).
+  - Displays "Thank You" page.
+  - Token is now permanently locked.
 ### Admin Flow (`admin.html`)
 Accessed only via admin token.
 
