@@ -105,90 +105,11 @@ Candidate Flow: Browser → Token verify (PHP) → Session start (folder create)
   - Marks token as used (adds to `used_tokens.json`).
   - Displays "Thank You" page.
   - Token is now permanently locked.
-### Admin Flow (`admin.html`)
-Admin Flow: Browser → API list (scan folders) → View (fetch files/metadata).
-Accessed only via admin token.
-The project operates on a client–server model: the frontend communicates with the backend via `fetch` API calls. All data is stored lightly using JSON and text files.
 
-### Candidate Flow
-- **Step 1 — Home Page** (`index.html`)  
-  Displays introduction and contact form.  
-  User clicks **Start Interview** → redirects to `token.html`.
-
-- **Step 2 — Token Verification** (`token.html`)  
-  User enters token → frontend calls:  
-  `POST → Backend/api/verify-token.php`  
-  → Backend checks `tokens.json`:  
-  • If **admin token** → redirect to `admin.html`  
-  • If **candidate token** → validate one-time use via `used_tokens.json`  
-    → If valid → display candidate name  
-    → User confirms “That’s me” → save token & name to `sessionStorage` → go to `interview.html`
-
-### Full Interview Flow 
-
-1. **Load Questions**  
-   **Frontend** (`interview.html` + `js/recorder-v3.js`)  
-   → Reads questions directly from `questions.json` (currently 3 fixed questions).
-
-2. **Create Session**  
-   **Frontend**
-      → Calls `POST Backend/api/session-start.php` with token from URL (`?t=…`)  
-   **Backend** (`session-start.php`)  
-   → Checks `Backend/used_tokens.json` → blocks reuse if token already exists  
-   → Creates timestamped folder in `/uploads/` with exact format:  
-     `DD.MM.YYYY_HH.MM_SS_CandidateName`  
-   → Creates `meta.json` inside the folder (contains start time, status = "in_progress")  
-   → Adds token to `used_tokens.json` → link becomes permanently one-time-use.
-
-3. **Question Loop** (repeated exactly 3 times)  
-   **Frontend**  
-    - 5 seconds preparation countdown  
-    - 3 seconds countdown for reading question  
-    - Records video + audio using MediaRecorder (max 60 seconds)  
-    - Displays live timer  
-    - Auto stops and uploads when finished  
-    → Calls `POST Backend/api/upload-one.php`  
-
-   **Backend** (`upload-one.php`)  
-   → Receives `token`, `question` (1–3), video file (`.webm`), and `duration`  
-   → Saves video as: `Q1.webm`, `Q2.webm`, `Q3.webm` inside candidate’s folder  
-   → Updates `questions` array in `meta.json`  
-   → Immediately triggers transcription (see step 4).
-
-4. **Transcription – Speech-to-Text** (auto after each upload)  
-   **Backend** (`upload-one.php` → calls `transcribe.php`)  
-   → **FFmpeg** (in `ffmpeg/` folder):  
-        Extracts audio from the latest `.webm` → creates temporary `temp.wav`  
-   → **Whisper.cpp** (in `whisper/` folder + `ggml-base.en.bin` model):  
-        Runs local AI speech recognition → appends recognized text to `transcript.txt`  
-        (adds header like "Question 1:", "Question 2:", etc.)  
-   → Final result: one single `transcript.txt` containing all 3 answers in order  
-   → Deletes `temp.wav` right after processing.
-
-5. **Finish Session**  
-   **Frontend** → After last question, calls `POST Backend/api/session-finish.php`  
-   **Backend** (`session-finish.php`)  
-   → Opens `meta.json` → sets `status = "completed"` and writes `completed_at` timestamp.
-
-6. **Thank You Screen + Final Storage**  
-   **Frontend** → Shows "Thank you" message and disables the link.  
-   **Backend** → Interview is now fully saved and ready for review.  
-
-   **Final folder structure (exactly what you see in real uploads):**
-``` text
-uploads/
-└── DD.MM.YYYY_HH.MM_SS_CandidateName/
-├── meta.json          ← metadata, timestamps, status
-├── Q1.webm            ← Answer 1 video
-├── Q2.webm            ← Answer 2 video
-├── Q3.webm            ← Answer 3 video
-└── transcript.txt     ← Full auto transcript of all answers
-```
 ### Admin Review Flow 
-
+Admin Flow: Browser → API list (scan folders) → View (fetch files/metadata).
 1. **Access Results**  
    Open the `/uploads/` folder directly on the server (via file manager, FTP, or shared drive).
-
 2. **List All Submissions**  
    Each completed interview is a clearly named, timestamped folder:
 ``` text
@@ -197,7 +118,7 @@ uploads/
 ├── 11.12.2025_00.01_Pham_Thi_B/
 └── ...
 ```
-3. **View Any Submission**  
+3. **View Any Submission** 
 ``` text
 Open the candidate’s folder → all files ready instantly:
 ├── meta.json          
@@ -208,10 +129,9 @@ Open the candidate’s folder → all files ready instantly:
 ```
 4. **Play Videos**  
 Double-click any `.webm` file → plays immediately in browser or any video player.
-
 5. **Read Transcript**  
 Open `transcript.txt` → read everything the candidate said, perfectly formatted.
-
+6. **Reply any feedback or messages**
 ### Support & Utility Features 
 
 1. **One-Time Token Rule**  
@@ -239,11 +159,9 @@ Each question has:
 - **Answer time:** 60s
 - **Break time after question:**  5s  
 - **One break for preparation:** 3s
-During breaks, it can display:  
-- “Start Recording”  
+During breaks, it can display “Start Recording” to start before finish countdown.
 Countdown includes:  
 - Timer display mm:ss  
-- Progress bar  
 
 ## 2.3 Token Authentication
 
@@ -257,9 +175,7 @@ Upload workflow:
 1. MediaRecorder → Blob  
 2. Blob → FormData  
 3. Fetch POST → `/api/upload-video`  
-4. Backend saves file: `/records/<token>/<question>.webm`  
-5. (Optional) ffmpeg remux → mp4  
-6. Send webhook/email when all videos are completed  
+4. Backend saves file: `/uploads/<token>/Q<question_number>.webm`    
 
 Upload includes:  
 - Maximum size 100MB/video  
@@ -274,14 +190,10 @@ Upload includes:
   - Stop Recording  
 
 - Question screen:  
-  - Title  
-  - Description  
-  - Countdown  
+  - Title    
+  - Countdown
+  - Break time  
   - Camera preview  
-- Break screen:  
-  - Remaining time  
-  - Next question 
-  - Skip button
 
 # 3. SYSTEM ARCHITECTURE
 ## 3.1. Key Components and Modules
