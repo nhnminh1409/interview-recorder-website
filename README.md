@@ -40,7 +40,7 @@ contact-messages.txt, interviewee.xlsx.
 #### Processing and Media Handling
 - FFPRESET: Command-line tool invoked via PHP `shell_exec()` to extract audio (MP3) from uploaded WebM videos (e.g., -i Q1.webm -vn -ar 16000 -ac 1 audio.mp3).
 - Whisper AI: OpenAI's speech-to-text model for transcribing extracted audio to `transcript.txt` (English-only; e.g., `whisper audio.mp3 --model base --output_format txt`)
-### 1.3.4. Utilities and Data Management
+### 1.3.3. Utilities and Data Management
 - Python: Utility scripting: `generate_tokens.py` reads `interviewee.xlsx`, generates random alphanumeric tokens (32 chars), and populates `tokens.json`.
 - Pandas: Data manipulation in Python: Parses Excel files and exports JSON/CSV for tokens.
 - Excel(xlsx): Input format for candidate lists (`interviewee.xlsx` columns: Name, Email).
@@ -49,7 +49,7 @@ contact-messages.txt, interviewee.xlsx.
 This section provides a complete, end-to-end overview of how the system operates, covering token generation, candidate experience, recording process, backend processing, and admin review.
 
 ### 1. Token Generation (Preparation Phase – Admin/HR)
-
+Token Generation: Offline (Python) → JSON update.
 1. HR prepares a list of candidates in data/interviewee.xlsx (columns: Name, Email).
 2. Run the utility script:
    ```bash
@@ -63,6 +63,7 @@ This section provides a complete, end-to-end overview of how the system operates
 4. Tokens are distributed to candidates via email or secure channel.
    
 ### Interview Flow (`interview.html` + `js/recorder-v3.js`)
+Candidate Flow: Browser → Token verify (PHP) → Session start (folder create) → Record/Upload loop (blob → PHP save → FFmpeg/Whisper) → Finish (update JSON).
 #### 1. Access the Site
 - Candidate opens `index.html` (home page).
 - Clicks "Start Interview" → redirected to `token.html`.
@@ -105,6 +106,7 @@ This section provides a complete, end-to-end overview of how the system operates
   - Displays "Thank You" page.
   - Token is now permanently locked.
 ### Admin Flow (`admin.html`)
+Admin Flow: Browser → API list (scan folders) → View (fetch files/metadata).
 Accessed only via admin token.
 
 **Main Features:**
@@ -186,37 +188,52 @@ Upload includes:
   - Next question 
   - Skip button
 
-## 2.6 Security & Basic Anti-Cheating (Tier 2+)
-- Token can be used only once → after session-start, mark used: true
-- If same token were used, return "Token used! Please contact to admin for support."
-- Each IP can enter a wrong token only 5 times → block for 15 minutes
-- Disable right-click, Ctrl+C, Ctrl+V on the interview page
-- Detect tab switching → pause recording + show warning
-- Video must have a face occupying >40% of the frame (simple detection using face-api.js – bonus feature)
-
 # 3. SYSTEM ARCHITECTURE
+## 3.1. Key Components and Modules
+### 3.1.1. Frontend Components
+- Directories/Files:`/frontend/` (HTML pages), `/assets/css/` (styles), `/frontend/js/` (scripts like `recorder-v3.js`).
+- Core Functionality: Handles token entry, question display, countdown timers (5s break, 3s prep, 60s record), video capture via MediaRecorder API, and uploads. Includes anti-cheat (tab detection, face-api.js for occupancy check).
+- Data Flow: Fetches JSON (questions/tokens), posts blobs to APIs; uses `sessionStorage` for transient state.
+### 3.1.2. Backend Components
+- Directories/Files:`/Backend/api/` (PHP endpoints: `verify-token.php`, `session-start.php`, `upload-one.php`, `transcribe.php`, `session-finish.php`, `admin-api.php`, `contact.php`).
+- Core Functionality: Token validation (against JSON), session folder creation (`/uploads/<token>/`), video saving (with 100MB limit and SHA-256 checksum), transcription pipeline, and admin queries (folder scanning).
+- Processing: Synchronous; uses `shell_exec()` for FFmpeg (audio extraction) and Whisper (STT to `transcript.txt`).
+- Dependencies: FFmpeg and Whisper must be installed locally (paths in `/Backend/ffmpeg/` and `/Backend/whisper/` implied).
+### 3.1.3. Storage and Data Management
+- Approach: File-centric, no RDBMS. Sessions in `/uploads/<token>/` (e.g., `Q1.webm`, `meta.json`, `transcript.txt`). Global data in `/data/` (e.g., `tokens.json`, `used_tokens.json`, `questions.json`, `contact-messages.txt`).
+- Proposed Enhancement: README includes PostgreSQL schema for tokens, interview_results, and logs tables—indicating a path to relational storage for better querying.
+### 3.1.4. Utilities
+- Directories/Files:/utils/ (`generate_tokens.py`, `RUN.bat`).
+- Functionality: Offline Python script using Pandas to generate tokens from `interviewee.xlsx` and update JSON. Not part of runtime architecture.
+## 3.2. Architechture diagram.
 ```text
-┌───────────────────┐
-│      Browser       │
-│  (Frontend + JS)   │
-└───────┬───────────┘
-        │  MediaRecorder → upload video chunks
-        ▼
-┌───────────────────┐
-│     Upload API     │
-│   (/api/upload)    │
-└───────┬───────────┘
-        │  Save files
-        ▼
-┌───────────────────┐
-│    File Storage    │
-│   (/uploads/)      │
-└───────┬───────────┘
-        │  Notify HR
-        ▼
-┌───────────────────┐
-│  Webhook / Email   │
-└───────────────────┘
+┌───────────────────────────────────────────┐
+│        Browser/Client                     │
+│ (HTML/CSS/JS + MediaRecorder)             │
+│ - UI: index/token/interview/admin.html    │
+│ - Logic: recorder-v3.js (Timers, Uploads) │
+└──────────────┬────────────────────────────┘
+               │ HTTP/Fetch (POST/GET)
+               ▼
+┌───────────────────────────────────────────┐
+│       Apache + PHP Backend                │
+│ - APIs: verify-token.php, upload-one.php, │
+│   transcribe.php, admin-api.php, etc.     │
+│ - Processing: shell_exec(FFmpeg + Whisper)│
+└──────────────┬────────────────────────────┘
+               │ File I/O
+               ▼
+┌───────────────────────────────────────────┐
+│       File Storage                        │
+│ - /uploads/<token>/ (Videos, Transcripts) │
+│ - /data/ (tokens.json, questions.json)    │
+└──────────────┬────────────────────────────┘
+               │ Optional (Python Utility)
+               ▼
+┌──────────────────────────────────────────────┐
+│      Utilities (Offline)                     │
+│ - generate_tokens.py (Pandas for Excel/JSON) │
+└──────────────────────────────────────────────┘
 ```
 # 4. Project structure
 ``` text
@@ -241,7 +258,7 @@ interview-recorder-website/
 │   ├── contact-messages.txt
 │   ├── interviewee.xlsx
 │   ├── questions.json
-│   └── tokens.json
+│   └── tokens.json                 #(auto create by running generate_tokens.py)
 │
 ├── frontend/
 │   ├── js/
@@ -255,10 +272,13 @@ interview-recorder-website/
 │   └── icon1.png
 │
 ├── utils/
-│   ├── generate_tokens.py
-│   └── RUN.bat
+│   ├── Candidates_YYYY-MM-DD/
+│       ├── interviewee_tokens.csv  #(Excal file with names and tokens)
+│       └── tokens_backup.json
+│   ├── generate_tokens.py          #(generate tokens for candidates)
+│   └── RUN.bat                     #(quick run generate_tokens.py)
 │
-└── README.md        
+└── uploads/                        #(Store interview videos)        
 
 
 ```
