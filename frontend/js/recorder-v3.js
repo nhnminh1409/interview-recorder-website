@@ -119,7 +119,7 @@ function startCountdown(seconds, phase, onComplete) {
 
 // TIMER HANDLERS
 function handleQuestionPrepareComplete() {
-  status.innerHTML = '<small class="text-primary">Chuẩn bị ghi (3s)...</small>';
+  status.innerHTML = '<small class="text-primary">Prepare to record (3s)...</small>';
   startCountdown(TIME_CONFIG.PREPARE_TIME, 'prepare', handlePrepareComplete);
 }
 
@@ -191,7 +191,7 @@ function showQuestion(idx) {
   updateProgress();
 
   stopTimer();
-  status.innerHTML = '<small class="text-primary">Chuẩn bị ghi (5s)...</small>';
+  status.innerHTML = '<small class="text-primary">Prepare to record (5s)...</small>';
   stopBtn.classList.add('d-none');
   nextBtn.classList.add('d-none');
   retryBtn?.classList.add('d-none');
@@ -349,8 +349,8 @@ function showCompletionMessage() {
   const card = document.querySelector('.interview-card');
   card.innerHTML = `
     <div class="text-center p-5">
-      <h1 class="text-success mb-4">Cảm ơn bạn đã tham gia phỏng vấn!</h1>
-      <p class="fs-5">Chúng tôi sẽ liên hệ lại với bạn sau khi xem xét câu trả lời.</p>
+      <h1 class="text-success mb-4">Thank you for participating in the interview!</h1>
+      <p class="fs-5">We will contact you after reviewing your responses.</p>
     </div>
   `;
 }
