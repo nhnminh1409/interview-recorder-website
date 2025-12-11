@@ -108,26 +108,121 @@ Candidate Flow: Browser → Token verify (PHP) → Session start (folder create)
 ### Admin Flow (`admin.html`)
 Admin Flow: Browser → API list (scan folders) → View (fetch files/metadata).
 Accessed only via admin token.
+The project operates on a client–server model: the frontend communicates with the backend via `fetch` API calls. All data is stored lightly using JSON and text files.
 
-**Main Features:**
-- List all sessions → `admin-api.php?action=list`  
-  (reads all folders in `/uploads/` and their `meta.json`)
-- View detailed session → `admin-api.php?action=view&folder=...`  
-  Displays: videos (Q1–Q5), transcript, metadata
-- Dashboard auto-refreshes every 5 seconds
-- Modal video player for preview
+### Candidate Flow
+- **Step 1 — Home Page** (`index.html`)  
+  Displays introduction and contact form.  
+  User clicks **Start Interview** → redirects to `token.html`.
 
-### Support Flows
-- **Generate Tokens**  
-  Run: `utils/generate_tokens.py`  
-  Reads `interviewee.xlsx` → auto-generates tokens → updates `tokens.json` & creates backup.
+- **Step 2 — Token Verification** (`token.html`)  
+  User enters token → frontend calls:  
+  `POST → Backend/api/verify-token.php`  
+  → Backend checks `tokens.json`:  
+  • If **admin token** → redirect to `admin.html`  
+  • If **candidate token** → validate one-time use via `used_tokens.json`  
+    → If valid → display candidate name  
+    → User confirms “That’s me” → save token & name to `sessionStorage` → go to `interview.html`
 
-- **Contact Form**  
-  `index.html` → `Backend/api/contact.php` → appends message to `data/contact-messages.txt`.
+### Full Interview Flow 
 
-- **One-Time Token Rule**  
-  After a candidate starts the interview, their token is added to `used_tokens.json`.  
-  Admin tokens are exempt from this rule.
+1. **Load Questions**  
+   **Frontend** (`interview.html` + `js/recorder-v3.js`)  
+   → Reads questions directly from `questions.json` (currently 3 fixed questions).
+
+2. **Create Session**  
+   **Frontend**
+      → Calls `POST Backend/api/session-start.php` with token from URL (`?t=…`)  
+   **Backend** (`session-start.php`)  
+   → Checks `Backend/used_tokens.json` → blocks reuse if token already exists  
+   → Creates timestamped folder in `/uploads/` with exact format:  
+     `DD.MM.YYYY_HH.MM_SS_CandidateName`  
+   → Creates `meta.json` inside the folder (contains start time, status = "in_progress")  
+   → Adds token to `used_tokens.json` → link becomes permanently one-time-use.
+
+3. **Question Loop** (repeated exactly 3 times)  
+   **Frontend**  
+    - 5 seconds preparation countdown  
+    - 3 seconds countdown for reading question  
+    - Records video + audio using MediaRecorder (max 60 seconds)  
+    - Displays live timer  
+    - Auto stops and uploads when finished  
+    → Calls `POST Backend/api/upload-one.php`  
+
+   **Backend** (`upload-one.php`)  
+   → Receives `token`, `question` (1–3), video file (`.webm`), and `duration`  
+   → Saves video as: `Q1.webm`, `Q2.webm`, `Q3.webm` inside candidate’s folder  
+   → Updates `questions` array in `meta.json`  
+   → Immediately triggers transcription (see step 4).
+
+4. **Transcription – Speech-to-Text** (auto after each upload)  
+   **Backend** (`upload-one.php` → calls `transcribe.php`)  
+   → **FFmpeg** (in `ffmpeg/` folder):  
+        Extracts audio from the latest `.webm` → creates temporary `temp.wav`  
+   → **Whisper.cpp** (in `whisper/` folder + `ggml-base.en.bin` model):  
+        Runs local AI speech recognition → appends recognized text to `transcript.txt`  
+        (adds header like "Question 1:", "Question 2:", etc.)  
+   → Final result: one single `transcript.txt` containing all 3 answers in order  
+   → Deletes `temp.wav` right after processing.
+
+5. **Finish Session**  
+   **Frontend** → After last question, calls `POST Backend/api/session-finish.php`  
+   **Backend** (`session-finish.php`)  
+   → Opens `meta.json` → sets `status = "completed"` and writes `completed_at` timestamp.
+
+6. **Thank You Screen + Final Storage**  
+   **Frontend** → Shows "Thank you" message and disables the link.  
+   **Backend** → Interview is now fully saved and ready for review.  
+
+   **Final folder structure (exactly what you see in real uploads):**
+``` text
+uploads/
+└── DD.MM.YYYY_HH.MM_SS_CandidateName/
+├── meta.json          ← metadata, timestamps, status
+├── Q1.webm            ← Answer 1 video
+├── Q2.webm            ← Answer 2 video
+├── Q3.webm            ← Answer 3 video
+└── transcript.txt     ← Full auto transcript of all answers
+```
+### Admin Review Flow 
+
+1. **Access Results**  
+   Open the `/uploads/` folder directly on the server (via file manager, FTP, or shared drive).
+
+2. **List All Submissions**  
+   Each completed interview is a clearly named, timestamped folder:
+``` text
+uploads/
+├── 10.12.2025_23.51_Nguyen_Van_A/
+├── 11.12.2025_00.01_Pham_Thi_B/
+└── ...
+```
+3. **View Any Submission**  
+``` text
+Open the candidate’s folder → all files ready instantly:
+├── meta.json          
+├── Q1.webm           
+├── Q2.webm      
+├── Q3.webm           
+└── transcript.txt     
+```
+4. **Play Videos**  
+Double-click any `.webm` file → plays immediately in browser or any video player.
+
+5. **Read Transcript**  
+Open `transcript.txt` → read everything the candidate said, perfectly formatted.
+
+### Support & Utility Features 
+
+1. **One-Time Token Rule**  
+Every link works exactly once.  
+As soon as the candidate starts → token is added to `Backend/used_tokens.json` → reuse is blocked forever.
+
+2. **Generate Tokens Anytime**  
+Run the included script:
+```bash
+python utils/generate_tokens.py
+```
 # 2. SYSTEM FEATURES (FULL DETAILS)
 
 ## 2.1 Video Recording Engine
@@ -326,39 +421,8 @@ http://<your-local-ip>/interview-recorder-website
 /data/used_tokens.json
 ```
 
-# 6. DATABASE SCHEMA
-``` sql
-CREATE TABLE tokens (
-    id SERIAL PRIMARY KEY,
-    token VARCHAR(64) UNIQUE NOT NULL,
-    candidate_name VARCHAR(255),
-    email VARCHAR(255),
-    expires_at TIMESTAMP,
-    used BOOLEAN DEFAULT FALSE,
-    created_at TIMESTAMP DEFAULT NOW()
-);
-
-CREATE TABLE interview_results (
-    id SERIAL PRIMARY KEY,
-    token VARCHAR(64) REFERENCES tokens(token),
-    question_number INTEGER NOT NULL,
-    video_path TEXT NOT NULL,
-    duration INTEGER,
-    filesize BIGINT,
-    created_at TIMESTAMP DEFAULT NOW()
-);
-
-CREATE TABLE logs (
-    id SERIAL PRIMARY KEY,
-    token VARCHAR(64),
-    event TEXT,
-    metadata JSON,
-    created_at TIMESTAMP DEFAULT NOW()
-);
-```
-
-# 7. API DOCUMENTATION (FULL)
-## 7.1 Check token
+# 6. API DOCUMENTATION (FULL)
+## 6.1 Check token
 POST /api/check-token
 Request:
 ``` json
@@ -373,7 +437,7 @@ Response:
  
 
 ```
-## 7.2 Upload video
+## 6.2 Upload video
 POST /api/upload-video
 
 FormData:
@@ -390,7 +454,7 @@ Response:
 "video_path": "/records/abc123/1.webm"
 
 ```
-## 7.3 Mark interview complete
+## 6.3 Mark interview complete
 
 POST /api/complete
 
@@ -399,7 +463,7 @@ Response:
 "status": "ok" 
 ```
 
-## 8. INTERVIEW FLOW DIAGRAM (ASCII)
+## 7. INTERVIEW FLOW DIAGRAM 
 ``` mermaid
 flowchart TD
     A[Start: index.html - Home Page] 
