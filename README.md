@@ -37,7 +37,7 @@ contact-messages.txt, interviewee.xlsx.
 - MediaRecorder API: Browser-native API for recording video/audio streams as WebM blobs during interviews.
 ### 1.3.2. Back-end
 - PHP: Core backend language for API endpoints (e.g., `verify-token.php` for auth, `upload-one.php` for file handling, `transcribe.php` for AI pipeline). Manages token validation, session folders in `/uploads/`, and JSON file I/O.
-### 1.3.3. Processing and Media Handling
+#### Processing and Media Handling
 - FFPRESET: Command-line tool invoked via PHP `shell_exec()` to extract audio (MP3) from uploaded WebM videos (e.g., -i Q1.webm -vn -ar 16000 -ac 1 audio.mp3).
 - Whisper AI: OpenAI's speech-to-text model for transcribing extracted audio to `transcript.txt` (English-only; e.g., `whisper audio.mp3 --model base --output_format txt`)
 ### 1.3.4. Utilities and Data Management
